@@ -16,6 +16,11 @@ Requirements
 - Game's config file needs to be separate from game's save file.
 - Steam Cloud usage needs to be properly implemented by developer of game in question (config files shouldn't be backed up to Steam Cloud).
 
+Limitations
+-----------
+- Currently, it is possible to use only one config file per game (should be suitable for most games).
+- Steam Deck performance profiles (TDP, frame limit, etc.) are not being updated via DockSettings.
+
 Usage
 -----
 - Download latest release of docksettings.sh to /home/deck/Documents/ (or any other fixed location).
@@ -26,12 +31,8 @@ Usage
 
 ![image](https://github.com/msterbi/docksettings/assets/50196622/b8c89a9b-6ad4-49b6-a574-28c26312906e)
 
-Limitations
------------
-- Currently, it is possible to use only one config file per game (should be suitable for most games).
-- Steam Deck performance profiles (TDP, frame limit, etc.) are not being updated via DockSettings.
-
 Testing
 -------
 DockSettings have been tested on following games:
 - Resident Evil 2
+- Duke Nukem 3D: 20th Anniversary World Tour
