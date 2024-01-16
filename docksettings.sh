@@ -70,19 +70,22 @@ elif [ "$LASTSTATE" = "1" ]; then
     echo "$DATE INFO: Last state 'docked'." >> "$LOGFILE"
 else
     echo "$DATE ERROR: Last state was 'unknown'. Exiting." >> "$LOGFILE"
+    echo "------------------------------------" >> "$LOGFILE"
     exit 1
 fi
 
 
 ## Determine resolution of primary display
 
-RESOLUTION=$(xrandr --current | grep primary | awk '{ print $4 }' | awk -F'+' '{print $1}')
-echo "$DATE INFO: Detected resolution of primary display is $RESOLUTION." >> "$LOGFILE"
+RESOLUTION=$(python3 -c 'from gi.repository import Gdk; screen=Gdk.Screen.get_default(); \
+geo = screen.get_monitor_geometry(screen.get_primary_monitor()); \
+print(geo.width, "x", geo.height)' 2> /dev/null)
+echo "$DATE INFO: Detected resolution of display is $RESOLUTION." >> "$LOGFILE"
 
 
 ## Determine if Deck is docked and save current state to file for future run
 
-if [ "$RESOLUTION" = "1280x800" ]; then
+if [ "$RESOLUTION" = "1280 x 800" ]; then
     DOCK=0
     echo 0 > "$ROOTDIR/docksettings/$1/laststate"
     echo "$DATE INFO: Current state is 'undocked'." >> "$LOGFILE"
@@ -108,3 +111,8 @@ elif [ "$DOCK" = "1" ] && [ "$LASTSTATE" = "0" ]; then
 elif [ "$DOCK" = "1" ] && [ "$LASTSTATE" = "1" ]; then
     echo "$DATE INFO: Last state was 'docked' and current state is 'docked'. Nothing to do." >> "$LOGFILE"
 fi
+
+
+## Add separator for better log readability
+
+echo "------------------------------------" >> "$LOGFILE"
