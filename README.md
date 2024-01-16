@@ -25,8 +25,8 @@ Usage
 -----
 - Download latest release of docksettings.sh to /home/deck/Documents/ (or any other fixed location).
 - Update permissions of docksettings.sh to make it executable (chmod +x docksettings.sh).
-- Update launch options of game to: /full/path/to/docksettings.sh "{NameOfGame}" "/full/path/to/{ConfigFileName}" & %command%.
-- _(Optional)_ Update resolution of game from Default to Native if you're experiencing issues with detecting resolution or using 16:10 external display.
+- Update launch options of game to: /full/path/to/docksettings.sh "{NameOfGame}" "/full/path/to/{ConfigFileName}" & %command%
+- _(Optional)_ Update Game Resolution from Default to Native if you're experiencing issues with detecting resolution or using 16:10 external display.
 - Launch game.
 
 ![image](https://github.com/msterbi/docksettings/assets/50196622/b8c89a9b-6ad4-49b6-a574-28c26312906e)
