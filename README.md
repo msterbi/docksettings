@@ -31,4 +31,7 @@ Limitations
 - Currently, it is possible to use only one config file per game (should be suitable for most games).
 - Steam Deck performance profiles (TDP, frame limit, etc.) are not being updated via DockSettings.
 
-
+Testing
+-------
+DockSettings have been tested on following games:
+- Resident Evil 2
