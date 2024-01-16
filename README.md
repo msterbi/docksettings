@@ -1,6 +1,7 @@
 Requirements:
 - knowledge of location of game's config file
 - game's config file needs to be separate from game's save file
+- game have proper implementation of Steam Cloud Saves (not uploading game settings to cloud)
 
 Description:
 - creates directory structure in /home/deck/Documents/docksettings/<NameOfGame>/ where config files, logs are stored
