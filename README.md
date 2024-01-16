@@ -1,16 +1,28 @@
-Requirements:
-- knowledge of location of game's config file
-- game's config file needs to be separate from game's save file
-- game have proper implementation of Steam Cloud Saves (not uploading game settings to cloud)
+DockSettings
+============
 
-Description:
-- creates directory structure in /home/deck/Documents/docksettings/<NameOfGame>/ where config files, logs are stored
-- automatically create backup of config file during first execution in location /home/deck/Documents/docksettings/<NameOfGame>/backup_<ConfigFileName> for case when something goes wrong and needs to be restored
-- determines if Deck is running docked or undocked by current output resolution of primary display
-- comparing last running state and current state and determining if there's need of copying config files
+DockSettings is shell script intended to be used by Steam Deck users, which are using Steam Deck in both handheld and docked (using external display) mode and would like to have separate ingame graphics settings, which will be automatically applied depending on mode in which game has been started. For example, using 1280x800 resolution & High preset in handheld mode and 1920x1080 resolution & Medium preset in docked mode, without needing to manually change these settings every time.
 
-Usage:
+Features
+--------
+- Creates directory structure in /home/deck/Documents/docksettings/{NameOfGame}/ where config files for both modes are being stored.
+- Automatically creates initial backup of config file during first execution in location /home/deck/Documents/docksettings/(NameOfGame)/backup_(ConfigFileName).
+- Determines if Deck is running in docked or handheld mode by current output resolution of primary display.
+- Compares last running mode and current mode and execute necessary actions to copy correct config files as needed.
 
-Limitations:
-- it is possible to use only one config file per game at the moment (should be suitable for most games)
-- not able to update Steam Deck performance profiles (TDP, frame limit, etc.) as profiles are not being stored in plain text
+Requirements
+------------
+- Location of game's config file needs to be known.
+- Game's config file needs to be separate from game's save file
+- Steam Cloud usage needs to be properly implemented by developer of game in question (config files shouldn't be backed up to Steam Cloud)
+
+Usage
+-----
+- Download latest release of docksettings.sh to /home/deck/Documents/ (or any other fixed location)
+- Update permissions of docksettings.sh to make it executable (chmod +x docksettings.sh)
+- Update launch options of game to: /home/deck/Documents/docksettings.sh "Resident Evil 2" "/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini" & %command%
+
+Limitations
+-----------
+- Currently, it is possible to use only one config file per game (should be suitable for most games).
+- Steam Deck performance profiles (TDP, frame limit, etc.) are not being updated via DockSettings.
