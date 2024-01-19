@@ -31,13 +31,14 @@ Usage
 
 ![image](https://github.com/msterbi/docksettings/assets/50196622/86be7f19-2c7c-4f5b-9d6b-9106ddaa3afc)
 
-- Path to config file can be specified either using full path or using prefixes as a shortcuts to steamapps directory on either NVMe storage or SD card:
--- **NVME:** /home/deck/.steam/steam/steamapps
--- **SD:** /run/media/deck/{SDVolumeName}/steamapps _(correct name of SD card volume is being automatically retrieved)_
-- Examples of valid paths of config file:
--- **Absolute path:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
--- **NVMe storage location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "NVME/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
--- **SD card location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "SD/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
+Path to config file can be specified either using full path or using prefixes as a shortcuts to steamapps directory on either NVMe storage or SD card:
+- **NVME:** /home/deck/.steam/steam/steamapps
+- **SD:** /run/media/deck/{SDVolumeName}/steamapps _(correct name of SD card volume is being automatically retrieved)_
+
+Examples of valid paths of config file:
+- **Absolute path:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
+- **NVMe storage location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "NVME/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
+- **SD card location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "SD/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
 
 Testing
 -------
