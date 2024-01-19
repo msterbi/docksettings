@@ -1,38 +1,88 @@
 #!/bin/bash
 
+## Changelog
+## 15-01-2024 v0.1 Initial release
+## 19-01-2024 v0.2 Display help; replace positional parameters with options; allow prefix shortcut to steamapps location
+
+
+## Define basic variables
+
 ROOTDIR=/home/deck/Documents
 DATE=$(date '+%d-%m-%Y %H:%M:%S')
-LOGFILE="$ROOTDIR/docksettings/$1/logfile"
 
-## Check if argument has been provided
 
-if [ $# -lt 2 ]
-then
-    echo "$DATE Please provide name of game and location to config file." >> "$ROOTDIR/docksettings_error"
-    echo "$DATE Example: ./docksettings.sh "Resident Evil 2" "/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini"" >> "$ROOTDIR/docksettings_error"
+## Display help message
+
+help()
+{
+    echo "Available options for docksettings.sh:"
+    echo "-h    Print this help"
+    echo "-n    Name of game"
+    echo "-f    Location of config file"
+    echo ""
+    echo "Examples:"
+    echo "./docksettings.sh -n \"Resident Evil 2\" -f \"/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
+    echo "./docksettings.sh -n \"Resident Evil 2\" -f \"NVME/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
+    echo "./docksettings.sh -n \"Resident Evil 2\" -f \"SD/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
+}
+
+
+## Get the options
+
+while getopts "hcn:f:" option; do
+    case $option in
+        h) help; exit;;
+        n) NAME=$OPTARG;;
+        f) FILE=$OPTARG;;
+        \?) echo "$DATE Invalid options have been used." >> "$ROOTDIR/docksettings_error"; exit;;
+    esac
+done
+
+
+## Check if mandatory options have been provided
+
+if [ "$NAME" = "" ] || [ "$FILE" = "" ]; then
+    echo "$DATE Mandatory options have not been provided. Please provide name of game and location to config file." >> "$ROOTDIR/docksettings_error"
+    echo "$DATE Example: ./docksettings.sh -n \"Resident Evil 2\" -f \"NVME/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\"" >> "$ROOTDIR/docksettings_error"
     exit 1
 fi
 
 
+## Define path to game specific logfile
+
+LOGFILE="$ROOTDIR/docksettings/$NAME/logfile"
+
+
 ## Extract config filename from path
 
-CONFIG=$(echo "$2" | awk '{print $NF}' FS=/)
+CONFIG=$(echo "$FILE" | awk '{print $NF}' FS=/)
 
 
 ## Check if directory structure exists and create it if not
 
-if [ -d "$ROOTDIR/docksettings/$1" ]; then
+if [ -d "$ROOTDIR/docksettings/$NAME" ]; then
     echo "$DATE INFO: Directory structure already exists." >> "$LOGFILE"
 else
-    mkdir -p "$ROOTDIR/docksettings/$1/deck"
-    mkdir -p "$ROOTDIR/docksettings/$1/dock"
+    mkdir -p "$ROOTDIR/docksettings/$NAME/deck"
+    mkdir -p "$ROOTDIR/docksettings/$NAME/dock"
     echo "$DATE CHANGE: Directory structure have been created." >> "$LOGFILE"
+fi
+
+
+## Support usage of NVME and SD prefixes for config file location shortcuts to steamapps folder
+if [[ $FILE = NVME* ]]; then
+    NVME="\/home\/deck\/.steam\/steam\/steamapps"
+    FILE=$(echo "$FILE" | sed "s/NVME/$NVME/")
+elif [[ $FILE = SD* ]]; then
+    SDNAME=$(df | grep mmcblk0 | awk '{print $6}' | awk -F/ '{print $5}')
+    SD="\/run\/media\/deck\/$SDNAME\/steamapps"
+    FILE=$(echo "$FILE" | sed "s/SD/$SD/")
 fi
 
 
 ## Check validity of provided config file path
 
-if [ -f "$2" ]; then
+if [ -f "$FILE" ]; then
     echo "$DATE INFO: Provided config file location is valid." >> "$LOGFILE"
 else
     echo "$DATE ERROR: Provided config file location doesn't exist. Exiting." >> "$LOGFILE"
@@ -42,27 +92,27 @@ fi
 
 ## Create initial backup and two profiles of savefile
 
-if [ -f "$ROOTDIR/docksettings/$1/backup_$CONFIG" ]; then
+if [ -f "$ROOTDIR/docksettings/$NAME/backup_$CONFIG" ]; then
     echo "$DATE INFO: Initial backup and profiles already exist." >> "$LOGFILE"
 else
-    cp -p "$2" "$ROOTDIR/docksettings/$1/backup_$CONFIG"
-    cp -p "$2" "$ROOTDIR/docksettings/$1/deck/deck_$CONFIG"
-    cp -p "$2" "$ROOTDIR/docksettings/$1/dock/dock_$CONFIG"
+    cp -p "$FILE" "$ROOTDIR/docksettings/$NAME/backup_$CONFIG"
+    cp -p "$FILE" "$ROOTDIR/docksettings/$NAME/deck/deck_$CONFIG"
+    cp -p "$FILE" "$ROOTDIR/docksettings/$NAME/dock/dock_$CONFIG"
     echo "$DATE CHANGE: Initial backup and docked/undocked profiles have been created." >> "$LOGFILE"
 fi
 
 
 ## Create last state file if it doesn't exist yet
 
-if [ ! -f "$ROOTDIR/docksettings/$1/laststate" ]; then
-    echo 0 > "$ROOTDIR/docksettings/$1/laststate"
+if [ ! -f "$ROOTDIR/docksettings/$NAME/laststate" ]; then
+    echo 0 > "$ROOTDIR/docksettings/$NAME/laststate"
     echo "$DATE CHANGE: Last state file have been created with dummy value 'undocked'." >> "$LOGFILE"
 fi
 
 
 ## Read last state value
 
-LASTSTATE=$(cat "$ROOTDIR/docksettings/$1/laststate")
+LASTSTATE=$(cat "$ROOTDIR/docksettings/$NAME/laststate")
 
 if [ "$LASTSTATE" = "0" ]; then
     echo "$DATE INFO: Last state was 'undocked'." >> "$LOGFILE"
@@ -87,11 +137,11 @@ echo "$DATE INFO: Detected resolution of display is $RESOLUTION." >> "$LOGFILE"
 
 if [ "$RESOLUTION" = "1280 x 800" ]; then
     DOCK=0
-    echo 0 > "$ROOTDIR/docksettings/$1/laststate"
+    echo 0 > "$ROOTDIR/docksettings/$NAME/laststate"
     echo "$DATE INFO: Current state is 'undocked'." >> "$LOGFILE"
 else
     DOCK=1
-    echo 1 > "$ROOTDIR/docksettings/$1/laststate"
+    echo 1 > "$ROOTDIR/docksettings/$NAME/laststate"
     echo "$DATE INFO: Current state is 'docked'." >> "$LOGFILE"
 fi
 
@@ -102,12 +152,16 @@ if [ "$DOCK" = "0" ] && [ "$LASTSTATE" = "0" ]; then
     echo "$DATE INFO: Last state was 'undocked' and current state is 'undocked'. Nothing to do." >> "$LOGFILE"
 elif [ "$DOCK" = "0" ] && [ "$LASTSTATE" = "1" ]; then
     echo "$DATE CHANGE: Last state was 'docked' and current state is 'undocked'. Copying correct save files." >> "$LOGFILE"
-    cp -p "$2" "$ROOTDIR/docksettings/$1/dock/dock_$CONFIG"
-    cp -p "$ROOTDIR/docksettings/$1/deck/deck_$CONFIG" "$2"
+    cp -p "$FILE" "$ROOTDIR/docksettings/$NAME/dock/dock_$CONFIG"
+    echo "$DATE CHANGE: Copying file $FILE to $ROOTDIR/docksettings/$NAME/dock/dock_$CONFIG" >> "$LOGFILE"
+    cp -p "$ROOTDIR/docksettings/$NAME/deck/deck_$CONFIG" "$FILE"
+    echo "$DATE CHANGE: Copying file $ROOTDIR/docksettings/$NAME/deck/deck_$CONFIG to $FILE" >> "$LOGFILE"
 elif [ "$DOCK" = "1" ] && [ "$LASTSTATE" = "0" ]; then
     echo "$DATE CHANGE: Last state was 'undocked' and current state is 'docked'. Copying correct save files." >> "$LOGFILE"
-    cp -p "$2" "$ROOTDIR/docksettings/$1/deck/deck_$CONFIG"
-    cp -p "$ROOTDIR/docksettings/$1/dock/dock_$CONFIG" "$2"
+    cp -p "$FILE" "$ROOTDIR/docksettings/$NAME/deck/deck_$CONFIG"
+    echo "$DATE CHANGE: Copying file $FILE to $ROOTDIR/docksettings/$NAME/deck/deck_$CONFIG" >> "$LOGFILE"
+    cp -p "$ROOTDIR/docksettings/$NAME/dock/dock_$CONFIG" "$FILE"
+    echo "$DATE CHANGE: Copying file $ROOTDIR/docksettings/$NAME/dock/dock_$CONFIG to $FILE" >> "$LOGFILE"
 elif [ "$DOCK" = "1" ] && [ "$LASTSTATE" = "1" ]; then
     echo "$DATE INFO: Last state was 'docked' and current state is 'docked'. Nothing to do." >> "$LOGFILE"
 fi
