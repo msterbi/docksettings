@@ -25,11 +25,19 @@ Usage
 -----
 - Download latest release of docksettings.sh to /home/deck/Documents/ (or any other fixed location).
 - Update permissions of docksettings.sh to make it executable (chmod +x docksettings.sh).
-- Update launch options of game to: /full/path/to/docksettings.sh "{NameOfGame}" "/full/path/to/{ConfigFileName}" & %command%
+- Update launch options of game to: /full/path/to/docksettings.sh -n "{NameOfGame}" -f "/path/to/{ConfigFileName}" & %command%
 - _(Optional)_ Update Game Resolution from Default to Native if you're experiencing issues with detecting resolution or using 16:10 external display.
 - Launch game.
 
-![image](https://github.com/msterbi/docksettings/assets/50196622/b8c89a9b-6ad4-49b6-a574-28c26312906e)
+![image](https://github.com/msterbi/docksettings/assets/50196622/86be7f19-2c7c-4f5b-9d6b-9106ddaa3afc)
+
+- Path to config file can be specified either using full path or using prefixes as a shortcuts to steamapps directory on either NVMe storage or SD card:
+-- **NVME:** /home/deck/.steam/steam/steamapps
+-- **SD:** /run/media/deck/{SDVolumeName}/steamapps _(correct name of SD card volume is being automatically retrieved)_
+- Examples of valid paths of config file:
+-- **Absolute path:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
+-- **NVMe storage location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "NVME/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
+-- **SD card location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "SD/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
 
 Testing
 -------
