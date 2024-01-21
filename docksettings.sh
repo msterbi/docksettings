@@ -4,6 +4,7 @@
 ## 15-01-2024 v0.1 Initial release
 ## 19-01-2024 v0.2 Display help; replace positional parameters with options; allow prefix shortcut to steamapps location
 ## 20-01-2024 v0.3 Added support for games which are syncing config data to Steam Cloud
+## 21-01-2023 v0.4 Added support for prefix STEAMAPPS for automatic detection of config file location; added support for restoring original config file
 
 
 ## Define basic variables
@@ -22,9 +23,11 @@ help()
     echo "-n    Name of game"
     echo "-f    Location of config file"
     echo "-c    Name of game's executable (optional; for games which are syncing config data to Steam Cloud)"
+    echo "-r    Restore original backup (which have been taken during first run) of config file"
     echo ""
     echo "Examples:"
     echo "./docksettings.sh -n \"Resident Evil 2\" -f \"/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
+    echo "./docksettings.sh -n \"Resident Evil 2\" -f \"STEAMAPPS/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
     echo "./docksettings.sh -n \"Resident Evil 2\" -f \"NVME/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
     echo "./docksettings.sh -n \"Resident Evil 2\" -f \"SD/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
     echo "./docksettings.sh -n \"NieR Automata\" -f \"NVME/compatdata/524220/pfx/drive_c/users/steamuser/Documents/My Games/NieR_Automata/SystemData.dat\" -c \"NieRAutomata.exe\""
@@ -33,12 +36,13 @@ help()
 
 ## Get the options
 
-while getopts "hc:n:f:" option; do
+while getopts "hrc:n:f:" option; do
     case $option in
         h) help; exit;;
         c) GAMEEXE=$OPTARG;;
         n) NAME=$OPTARG;;
         f) FILE=$OPTARG;;
+        r) RESTORE=1;;
         \?) echo "$DATE Invalid options have been used." >> "$ROOTDIR/docksettings_error"; exit;;
     esac
 done
@@ -48,7 +52,7 @@ done
 
 if [ "$NAME" = "" ] || [ "$FILE" = "" ]; then
     echo "$DATE Mandatory options have not been provided. Please provide name of game and location to config file." >> "$ROOTDIR/docksettings_error"
-    echo "$DATE Example: ./docksettings.sh -n \"Resident Evil 2\" -f \"NVME/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\"" >> "$ROOTDIR/docksettings_error"
+    echo "$DATE Example: ./docksettings.sh -n \"Resident Evil 2\" -f \"STEAMAPPS/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\"" >> "$ROOTDIR/docksettings_error"
     exit 1
 fi
 
@@ -74,7 +78,28 @@ else
 fi
 
 
+## Support usage of STEAMAPPS prefix for automatic detection of config file location
+
+if [[ $FILE = STEAMAPPS* ]]; then
+    NVME="\/home\/deck\/.steam\/steam\/steamapps"
+    SDNAME=$(df | grep mmcblk0 | awk '{print $6}' | awk -F/ '{print $5}')
+    SD="\/run\/media\/deck\/$SDNAME\/steamapps"
+    if [ -f "$(echo "$FILE" | sed "s/STEAMAPPS/$NVME/")" ]; then
+        FILE=$(echo "$FILE" | sed "s/STEAMAPPS/$NVME/")
+        echo "$DATE INFO: Config file location have been automatically found on NVMe: $FILE." >> "$LOGFILE"
+    elif [ -f "$(echo "$FILE" | sed "s/STEAMAPPS/$SD/")" ]; then
+        FILE=$(echo "$FILE" | sed "s/STEAMAPPS/$SD/")
+        echo "$DATE INFO: Config file location have been automatically found on SD card: $FILE." >> "$LOGFILE"
+    else
+        echo "$DATE ERROR: Not able to automatically detect config file location. Exiting." >> "$LOGFILE"
+        echo "------------------------------------" >> "$LOGFILE"
+        exit 1
+    fi
+fi
+
+
 ## Support usage of NVME and SD prefixes for config file location shortcuts to steamapps folder
+
 if [[ $FILE = NVME* ]]; then
     NVME="\/home\/deck\/.steam\/steam\/steamapps"
     FILE=$(echo "$FILE" | sed "s/NVME/$NVME/")
@@ -91,9 +116,25 @@ if [ -f "$FILE" ]; then
     echo "$DATE INFO: Provided config file location is valid." >> "$LOGFILE"
 else
     echo "$DATE ERROR: Provided config file location doesn't exist. Exiting." >> "$LOGFILE"
+    echo "------------------------------------" >> "$LOGFILE"
     exit 1
 fi
 
+
+## Restore initial backup if requested by option -r
+
+if [ "$RESTORE" = "1" ]; then
+    if [ ! -f "$ROOTDIR/docksettings/$NAME/backup_$CONFIG" ]; then
+        echo "$DATE ERROR: Restore failed. Initial backup of config file $ROOTDIR/docksettings/$NAME/backup_$CONFIG does not exist. Exiting" >> "$LOGFILE"
+        echo "------------------------------------" >> "$LOGFILE"
+        exit 1
+    else
+        cp -p "$ROOTDIR/docksettings/$NAME/backup_$CONFIG" "$FILE"
+        echo "$DATE CHANGE: Initial backup of config file $ROOTDIR/docksettings/$NAME/backup_$CONFIG have been restored to $FILE. Exiting." >> "$LOGFILE"
+        echo "------------------------------------" >> "$LOGFILE"
+        exit 0
+    fi
+fi
 
 ## Create initial backup and two profiles of configfile
 
