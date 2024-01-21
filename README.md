@@ -14,7 +14,6 @@ Requirements
 ------------
 - Location of game's config file needs to be known.
 - Game's config file needs to be separate from game's save file.
-- Steam Cloud usage needs to be properly implemented by developer of game in question (config files shouldn't be backed up to Steam Cloud).
 
 Limitations
 -----------
@@ -39,6 +38,17 @@ Examples of valid paths of config file:
 - **Absolute path:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
 - **NVMe storage location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "NVME/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
 - **SD card location:** /home/deck/Documents/docksettings.sh -n "Resident Evil 2" -f "SD/common/RESIDENT EVIL 2 BIOHAZARD RE2/re2_config.ini"
+
+Cloud-based Config File
+-----------------------
+Steam Cloud should be normally used for syncing save game files only, however some games are breaking this functionality by syncing also config files. This results in having same graphics/system configuration when playing same game on multiple devices. DockSettings is normally executing itself when game is started, doing required syncing of config file and exiting still while game is starting. With option _-c "{GameExe}"_, DockSettings is running continuously, watching main game process until its exit and syncing config file to DockSettings directory only after you quit the game.
+
+Example for game NieR Automata:
+
+- Config file of NieR Automata is being identified as SystemData.dat
+- When browsing personal [Steam Cloud](https://store.steampowered.com/account/remotestorage), we can confirm that config file SystemData.dat is also being synced to Steam Cloud
+- Therefore we'll use following Launch options for game NieR Automata:
+/home/deck/Documents/docksettings.sh -n "NieR Automata" -f "NVME/compatdata/524220/pfx/drive_c/users/steamuser/Documents/My Games/NieR_Automata/SystemData.dat" **-c "NieRAutomata.exe"** & %command%
 
 Testing
 -------
