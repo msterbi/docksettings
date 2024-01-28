@@ -69,5 +69,7 @@ Testing
 -------
 DockSettings have been tested on following games:
 - Resident Evil 2
+- Resident Evil 3
 - Duke Nukem 3D: 20th Anniversary World Tour
 - NieR Automata
+- Half-Life 2
