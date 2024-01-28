@@ -62,7 +62,6 @@ Example of usage:
 Local database files:
 - **Official database:** is being downloaded and auto-updated in location /home/deck/Documents/docksettings_db.csv and it's being pulled directly from [GitHub](https://raw.githubusercontent.com/msterbi/docksettings/main/docksettings_db.csv).
 - **Custom database:** needs to be created in location /home/deck/Documents and needs to match filename docksettings_db*.csv (for example docksettings_db_custom.csv). Correct format for content is "{NameOfGame};{ConfigFileLocation};{GameExe}". It is also possible to use multiple custom database files.
-Submitting entries to official database:
 
 You can submit your entries for official database usage via [Google Sheets](https://docs.google.com/spreadsheets/d/1rqgKSCAeK0FmybbF7VlGhhxGjgN4wHVfaFMGTTueBJc/edit?usp=sharing). Please refer to second sheet with name "How To Use" for details.
 
