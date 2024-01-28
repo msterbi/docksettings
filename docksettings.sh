@@ -4,7 +4,8 @@
 ## 15-01-2024 v0.1 Initial release
 ## 19-01-2024 v0.2 Display help; replace positional parameters with options; allow prefix shortcut to steamapps location
 ## 20-01-2024 v0.3 Added support for games which are syncing config data to Steam Cloud
-## 21-01-2023 v0.4 Added support for prefix STEAMAPPS for automatic detection of config file location; added support for restoring original config file
+## 21-01-2024 v0.4 Added support for prefix STEAMAPPS for automatic detection of config file location; added support for restoring original config file
+## 28-01-2024 v0.5 Added support for retrieving inputs from local database and autodownload db from github
 
 
 ## Define basic variables
@@ -12,6 +13,8 @@
 ROOTDIR=/home/deck/Documents
 DATE=$(date '+%d-%m-%Y %H:%M:%S')
 CLOUDSLEEP=10
+DB=$ROOTDIR/docksettings_db*.csv
+DBURL=https://raw.githubusercontent.com/msterbi/docksettings/main/docksettings_db.csv
 
 
 ## Display help message
@@ -22,10 +25,12 @@ help()
     echo "-h    Print this help"
     echo "-n    Name of game"
     echo "-f    Location of config file"
+    echo "-i    Enable input from local database file"
     echo "-c    Name of game's executable (optional; for games which are syncing config data to Steam Cloud)"
     echo "-r    Restore original backup (which have been taken during first run) of config file"
     echo ""
     echo "Examples:"
+    echo "./docksettings.sh -n \"Resident Evil 2\" -i"
     echo "./docksettings.sh -n \"Resident Evil 2\" -f \"/home/deck/.steam/steam/steamapps/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
     echo "./docksettings.sh -n \"Resident Evil 2\" -f \"STEAMAPPS/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
     echo "./docksettings.sh -n \"Resident Evil 2\" -f \"NVME/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\""
@@ -36,13 +41,14 @@ help()
 
 ## Get the options
 
-while getopts "hrc:n:f:" option; do
+while getopts "hric:n:f:" option; do
     case $option in
         h) help; exit;;
         c) GAMEEXE=$OPTARG;;
         n) NAME=$OPTARG;;
         f) FILE=$OPTARG;;
         r) RESTORE=1;;
+        i) INPUT=1;;
         \?) echo "$DATE Invalid options have been used." >> "$ROOTDIR/docksettings_error"; exit;;
     esac
 done
@@ -50,10 +56,67 @@ done
 
 ## Check if mandatory options have been provided
 
-if [ "$NAME" = "" ] || [ "$FILE" = "" ]; then
-    echo "$DATE Mandatory options have not been provided. Please provide name of game and location to config file." >> "$ROOTDIR/docksettings_error"
-    echo "$DATE Example: ./docksettings.sh -n \"Resident Evil 2\" -f \"STEAMAPPS/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\"" >> "$ROOTDIR/docksettings_error"
-    exit 1
+if [ "$INPUT" = "" ]; then
+    if [ "$NAME" = "" ] || [ "$FILE" = "" ]; then
+        echo "$DATE Mandatory options have not been provided. Please provide name of game and location to config file." >> "$ROOTDIR/docksettings_error"
+        echo "$DATE Example: ./docksettings.sh -n \"Resident Evil 2\" -f \"STEAMAPPS/common/RESIDENT EVIL 2  BIOHAZARD RE2/re2_config.ini\"" >> "$ROOTDIR/docksettings_error"
+        exit 1
+    fi
+elif [ "$INPUT" = "1" ]; then
+    if [ "$NAME" = "" ]; then
+        echo "$DATE Mandatory options have not been provided. Please provide name of game." >> "$ROOTDIR/docksettings_error"
+        echo "$DATE Example: ./docksettings.sh -n \"Resident Evil 2\" -i" >> "$ROOTDIR/docksettings_error"
+        exit 1
+    fi
+fi
+
+
+## Download or update docksettings_db.csv if necessary
+
+if [ "$INPUT" = "1" ]; then
+    LD_PRELOAD=/usr/lib/libcurl.so.4
+    if [ ! -f "$ROOTDIR/docksettings_db.csv" ]; then
+        echo "$DATE File docksettings_db.csv does not exist. Starting download." >> "$ROOTDIR/docksettings_db_log"
+        curl -f $DBURL -o $ROOTDIR/docksettings_db.csv >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo "$DATE File docksettings_db.csv has been downloaded." >> "$ROOTDIR/docksettings_db_log"
+        else
+            echo "$DATE Not able to download from $DBURL." >> "$ROOTDIR/docksettings_db_log"
+        fi
+    else
+        DBSHA1=$(sha1sum $ROOTDIR/docksettings_db.csv | cut -d " " -f1)
+        DBSHA2=$(curl -f $DBURL -s -o - | sha1sum | cut -d " " -f1)
+        if [ "$DBSHA1" == "$DBSHA2" ]; then
+            echo "$DATE File docksettings_db.csv is up to date. Nothing to do" >> "$ROOTDIR/docksettings_db_log"
+        elif [ "$DBSHA2" == "da39a3ee5e6b4b0d3255bfef95601890afd80709" ]; then
+            echo "$DATE Not able to reach $DBURL. Database update failed." >> "$ROOTDIR/docksettings_db_log"
+        else
+            curl -f $DBURL -o $ROOTDIR/docksettings_db.csv >/dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                echo "$DATE File docksettings_db.csv has been updated." >> "$ROOTDIR/docksettings_db_log"
+            else
+                echo "$DATE Update of docksettings_db.csv failed." >> "$ROOTDIR/docksettings_db_log"
+            fi
+        fi
+    fi
+fi
+
+
+## Get variables from local database
+
+if [ "$INPUT" = "1" ]; then
+    ENTRIES=$(grep "$NAME;" $DB 2> /dev/null | wc -l)
+    DBENTRY=$(grep "$NAME;" $DB 2> /dev/null)
+    if [ $? -eq 1 ]; then
+        echo "$DATE Database entry for game $NAME does not exist. Exiting" >> "$ROOTDIR/docksettings_error"
+        exit 1
+    elif [ $ENTRIES -gt 1 ]; then
+        echo "$DATE There are two or more database entries for game $NAME. Exiting" >> "$ROOTDIR/docksettings_error"
+        exit 1
+    else
+        FILE=$(echo "$DBENTRY" | cut -d ":" -f2- | cut -d ";" -f2)
+        GAMEEXE=$(echo "$DBENTRY" | cut -d ":" -f2- | cut -d ";" -f3)
+    fi
 fi
 
 
@@ -164,7 +227,7 @@ if [ "$GAMEEXE" = "" ]; then
     if [ "$LASTSTATE" = "0" ]; then
         echo "$DATE INFO: Last state was 'undocked'." >> "$LOGFILE"
     elif [ "$LASTSTATE" = "1" ]; then
-        echo "$DATE INFO: Last state 'docked'." >> "$LOGFILE"
+        echo "$DATE INFO: Last state was 'docked'." >> "$LOGFILE"
     else
         echo "$DATE ERROR: Last state was 'unknown'. Exiting." >> "$LOGFILE"
         echo "------------------------------------" >> "$LOGFILE"
